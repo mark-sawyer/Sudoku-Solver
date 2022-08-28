@@ -11,4 +11,5 @@ public static class Constants {
     public static readonly string spriteNinePath = "Sprites/Digits/nine";
 
     public static readonly string managerGameObjectName = "manager";
+    public static readonly string banSpaceGameObjectName = "ban space";
 }

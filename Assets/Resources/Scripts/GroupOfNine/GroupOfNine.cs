@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class GroupOfNine {
-    Space[] spaces = new Space[9];
+    public Space[] spaces { get; private set; }
 
     public GroupOfNine(GroupType groupType, int num) {
+        spaces = new Space[9];
+
         switch (groupType) {
             case GroupType.ROW:
                 getRowSpaces(num);
@@ -19,16 +21,54 @@ public class GroupOfNine {
         }
     }
 
-    public void updateSpacesBans(Space changedSpace, Digit oldDigit, Digit newDigit) {
+    public SpaceDigitPair spaceNeedingDigit() {
+        List<Digit> possibleDigits = new List<Digit> {
+            Digit.ONE, Digit.TWO, Digit.THREE,
+            Digit.FOUR, Digit.FIVE, Digit.SIX,
+            Digit.SEVEN, Digit.EIGHT, Digit.NINE
+        };
+        List<Space> emptySpaces = new List<Space>();
+
+        getEmptySpacesAndPossibleDigits(possibleDigits, emptySpaces);
+        SpaceDigitPair spaceNeedingDigit = findSpaceNeedingDigit(possibleDigits, emptySpaces);
+        return spaceNeedingDigit;
+    }
+
+    private void getEmptySpacesAndPossibleDigits(List<Digit> possibleDigits, List<Space> emptySpaces) {
         foreach (Space space in spaces) {
-            space.updateBans(changedSpace, oldDigit, newDigit);
+            if (space.digit != Digit.NONE) possibleDigits.Remove(space.digit);
+            else emptySpaces.Add(space);
         }
     }
 
-    public void updateSpacesConflicts() {
-        foreach (Space space in spaces) {
-            space.checkForConflict();
+    private SpaceDigitPair findSpaceNeedingDigit(List<Digit> possibleDigits, List<Space> emptySpaces) {
+        Space targetSpace = null;
+        SpaceDigitPair spaceDigitPair = new SpaceDigitPair(null, Digit.NONE);
+
+        foreach (Digit possibleDigit in possibleDigits) {
+            targetSpace = getOnlySpaceAcceptingDigit(emptySpaces, possibleDigit);
+            if (targetSpace != null) {
+                spaceDigitPair = new SpaceDigitPair(targetSpace, possibleDigit);
+                break;
+            }
         }
+
+        return spaceDigitPair;
+    }
+
+    private Space getOnlySpaceAcceptingDigit(List<Space> emptySpaces, Digit possibleDigit) {
+        Space spaceDigitShouldGo = null;
+        int spacesForDigit = 0;
+
+        foreach (Space emptySpace in emptySpaces) {
+            if (!emptySpace.digitBans.digitIsBanned(possibleDigit)) {
+                spacesForDigit++;
+                spaceDigitShouldGo = emptySpace;
+            }
+        }
+
+        if (spacesForDigit == 1) return spaceDigitShouldGo;
+        else return null;
     }
 
     private void getRowSpaces(int rowNum) {
